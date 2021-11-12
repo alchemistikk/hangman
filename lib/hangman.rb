@@ -1,11 +1,13 @@
 # frozen_string_literal: false
 
+require 'yaml'
+
 # An instantion of the class Game will maintain the state of a game of hangman
 class Game
   def initialize
-    @incorrect_guesses_remaining = 5 # Head, torso, arm, arm, leg, leg (6th element means loss)
     @board = ''
     @incorrect_guesses = []
+    @incorrect_guesses_remaining = 5 # Head, torso, arm, arm, leg, leg (6th element means loss)
   end
 
   def play
@@ -14,7 +16,10 @@ class Game
     while @incorrect_guesses_remaining.positive?
       puts "Incorrect guesses remaining: #{@incorrect_guesses_remaining}  |"\
         "  Incorrect guesses: #{@incorrect_guesses}"
-      play_round
+      if play_round == 'game_saved'
+        puts 'Game saved as game.yaml. Goodbye for now.'
+        break
+      end
       break if winner? == true
     end
     puts "You lose. The secret word was #{@secret_word}." if @incorrect_guesses_remaining.zero?
@@ -28,7 +33,10 @@ class Game
   end
 
   def play_round
-    # Add option to save the game
+    saved = save_game?
+    return 'game_saved' if saved == 'y'
+
+    puts 'Enter guess'
     guess = gets.chomp.downcase
     if @secret_word.downcase.include?(guess)
       update_board(guess)
@@ -37,6 +45,15 @@ class Game
       @incorrect_guesses_remaining -= 1
     end
     puts @board
+  end
+
+  def save_game?
+    puts 'Save game? y or n'
+    desire = gets.chomp
+    return unless desire == 'y'
+
+    File.open('game.yaml', 'w') { |game| game.puts YAML.dump(self) }
+    desire
   end
 
   def update_board(guess)
@@ -56,5 +73,21 @@ class Game
   end
 end
 
-game = Game.new
-game.play
+def open_saved?
+  puts 'Open saved game? y or n'
+  return unless gets.chomp == 'y'
+
+  File.open('game.yaml', 'r') { |game| YAML.load(game) }
+end
+
+def play
+  saved_game = open_saved?
+  if !saved_game.nil?
+    saved_game.play
+  else
+    game = Game.new
+    game.play
+  end
+end
+
+play

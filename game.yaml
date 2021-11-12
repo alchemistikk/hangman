@@ -1,0 +1,6 @@
+--- !ruby/object:Game
+board: _________
+incorrect_guesses:
+- n
+incorrect_guesses_remaining: 4
+secret_word: sweatshop
